@@ -34,6 +34,7 @@ IRAM_ATTR void handshakeSniffer(void* buf, wifi_promiscuous_pkt_type_t type);
 String generatePCAP();
 bool isHandshakePacket(const uint8_t* data, uint16_t len);
 void scanNetworkPrinters();
+bool connectToNetwork(String ssid, String password);
 void printToPrinter(String printerIP, String message);
 void startPrinterAttack();
 void stopPrinterAttack();

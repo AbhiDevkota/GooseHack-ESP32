@@ -148,14 +148,24 @@ String controlPanel() {
   html += "<button class='btn btn-primary'>Update AP</button></form></div>";
   
   html += "<div class=card><h3>Network Printers</h3>";
-  html += "<form action=/scanprinters method=post><button class='btn btn-secondary'>Scan Network</button></form>";
-  if (discoveredPrinters.length() > 0 && discoveredPrinters != "No printers found") {
-    html += "<div class=form-group><label>Discovered Printers:</label><textarea readonly>" + discoveredPrinters + "</textarea></div>";
-    html += "<form action=/printtest method=post><div class=form-group><label>Target IP</label><input type=text name=ip placeholder='192.168.1.100'></div>";
-    html += "<div class=form-group><label>Message</label><input type=text name=msg value='Security Test - Unauthorized Access'></div>";
-    html += "<button class='btn btn-warning'>Send Print Job</button></form>";
-  } else if (discoveredPrinters.length() > 0) {
-    html += "<p>" + discoveredPrinters + "</p>";
+  if (!WiFi.isConnected()) {
+    html += "<div class=form-group><label>Connect to Network First:</label></div>";
+    html += "<form action=/connectnet method=post><div class=form-group><label>Network SSID</label><input type=text name=ssid placeholder='Target-Network'></div>";
+    html += "<div class=form-group><label>Password</label><input type=password name=pass placeholder='network-password'></div>";
+    html += "<button class='btn btn-primary'>Connect to Network</button></form>";
+  } else {
+    String currentSSID = (WiFi.SSID().length() > 0) ? WiFi.SSID() : "Unknown";
+    html += "<div class=form-group><label>Connected to: " + currentSSID + " (" + WiFi.localIP().toString() + ")</label></div>";
+    html += "<form action=/scanprinters method=post><button class='btn btn-secondary'>Scan Network</button></form>";
+    if (discoveredPrinters.length() > 0 && discoveredPrinters != "No printers found") {
+      html += "<div class=form-group><label>Discovered Printers:</label><textarea readonly>" + discoveredPrinters + "</textarea></div>";
+      html += "<form action=/printtest method=post><div class=form-group><label>Target IP</label><input type=text name=ip placeholder='192.168.1.100'></div>";
+      html += "<div class=form-group><label>Message</label><input type=text name=msg value='Security Test - Unauthorized Access'></div>";
+      html += "<button class='btn btn-warning'>Send Print Job</button></form>";
+    } else if (discoveredPrinters.length() > 0) {
+      html += "<p>" + discoveredPrinters + "</p>";
+    }
+    html += "<form action=/disconnect method=post><button class='btn btn-secondary'>Disconnect & Return to AP</button></form>";
   }
   html += "</div></div>";
   
