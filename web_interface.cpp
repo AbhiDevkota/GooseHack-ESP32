@@ -177,6 +177,25 @@ void setupWebServer() {
     webServer.send(HTTP_CODE, "text/html", controlPanel());
   });
 
+  webServer.on("/viewhandshakes", HTTP_POST, [&isAdmin]() {
+    if (!isAdmin) {
+      webServer.send(HTTP_CODE, "text/html", evilIndex());
+      return;
+    }
+    String html = htmlHeader("Captured Handshakes");
+    html += "<div class=container><div class=card><h3>Captured Handshakes</h3>";
+    if (capturedHandshakes.length() > 0) {
+      html += "<div class=form-group><label>Raw Handshake Data:</label>";
+      html += "<textarea readonly style='height:300px;font-family:monospace;font-size:12px'>" + capturedHandshakes + "</textarea></div>";
+      html += "<p>Total packets: " + String(handshakeCount) + "</p>";
+    } else {
+      html += "<p>No handshakes captured yet.</p>";
+    }
+    html += "<form action=/ method=get><button class='btn btn-secondary'>Back to Control Panel</button></form>";
+    html += "</div></div>" + htmlFooter();
+    webServer.send(HTTP_CODE, "text/html", html);
+  });
+
   webServer.on("/clearhs", HTTP_POST, [&isAdmin]() {
     if (!isAdmin) {
       webServer.send(HTTP_CODE, "text/html", evilIndex());

@@ -141,6 +141,7 @@ String controlPanel() {
   html += aggressiveHandshake ? "btn-danger'>Stop Aggressive (80s)" : "btn-primary'>Aggressive Handshake (De)";
   html += "</button></form>";
   html += "<form action=/download method=post><button class='btn btn-secondary'>Download PCAP</button></form>";
+  html += "<form action=/viewhandshakes method=post><button class='btn btn-secondary'>View Handshakes</button></form>";
   html += "<form action=/clearhs method=post><button class='btn btn-secondary'>Clear Handshakes</button></form>";
   html += "<form action=/viewpass method=post><button class='btn btn-secondary'>View Credentials</button></form>";
   html += "<form action=/changeap method=post><div class=form-group><label>AP SSID</label><input type=text name=ssid value='" + MAIN_SSID + "'></div>";
