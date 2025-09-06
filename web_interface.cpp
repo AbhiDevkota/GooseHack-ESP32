@@ -192,9 +192,9 @@ void setupWebServer() {
       return;
     }
     String pcap = generatePCAP();
-    webServer.sendHeader("Content-Disposition", "attachment; filename=handshakes.pcap");
-    webServer.sendHeader("Content-Type", "application/octet-stream");
-    webServer.send(200, "application/octet-stream", pcap);
+    webServer.sendHeader("Content-Disposition", "attachment; filename=\"handshakes.pcap\"");
+    webServer.sendHeader("Content-Type", "application/vnd.tcpdump.pcap");
+    webServer.send(200, "application/vnd.tcpdump.pcap", pcap);
   });
 
   webServer.on("/beaconspam", HTTP_POST, [&isAdmin]() {
