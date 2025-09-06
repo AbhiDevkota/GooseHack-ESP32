@@ -33,7 +33,6 @@ uint32_t packetSize = 0;
 uint32_t packetCounter = 0;
 DNSServer dnsServer;
 WebServer webServer(80);
-NimBLEAdvertising *pAdvertising;
 TaskHandle_t deauthTaskHandle = NULL;
 
 #include "web_styles.h"

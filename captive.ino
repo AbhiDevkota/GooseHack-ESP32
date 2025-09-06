@@ -75,22 +75,4 @@ void loop() {
       lastBeaconTime = millis();
     }
   }
-
-  if (sourAppleActive) {
-    NimBLEAdvertisementData advertisementData = getSourAppleData();
-    pAdvertising->setAdvertisementData(advertisementData);
-    pAdvertising->start();
-    delay(10);
-    pAdvertising->stop();
-    delay(5);
-  }
-
-  if (windowsBluetoothActive) {
-    NimBLEAdvertisementData advertisementData = getWindowsBluetoothData();
-    pAdvertising->setAdvertisementData(advertisementData);
-    pAdvertising->start();
-    delay(100);
-    pAdvertising->stop();
-    delay(50);
-  }
 }

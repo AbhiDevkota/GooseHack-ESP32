@@ -86,7 +86,6 @@ extern uint32_t packetSize;
 extern uint32_t packetCounter;
 extern DNSServer dnsServer;
 extern WebServer webServer;
-extern NimBLEAdvertising *pAdvertising;
 extern TaskHandle_t deauthTaskHandle;
 extern bool printerAttackActive;
 extern String discoveredPrinters;

