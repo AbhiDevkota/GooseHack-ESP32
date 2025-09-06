@@ -3,6 +3,10 @@
 
 #include "config.h"
 
+// LED control functions
+void initLEDs();
+void updateLEDs();
+
 NimBLEAdvertisementData getSourAppleData();
 void startSourApple();
 void stopSourApple();

@@ -23,6 +23,9 @@ void saveAPSettings() {
 void setup() {
   Serial.begin(115200);
   
+  // Initialize LEDs
+  initLEDs();
+  
   // Load saved AP settings
   loadAPSettings();
   
@@ -44,6 +47,9 @@ void setup() {
 void loop() {
   dnsServer.processNextRequest();
   webServer.handleClient();
+  
+  // Update LED status
+  updateLEDs();
   
   if (attackActive) {
     if (millis() - lastAttackTime >= ATTACK_INTERVAL) {

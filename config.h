@@ -8,6 +8,10 @@
 #include <NimBLEDevice.h>
 #include <Preferences.h>
 
+// LED pins for ESP32 WROOM-32
+#define RED_LED 2
+#define BLUE_LED 4
+
 String MAIN_SSID = "Durgesh ko bhai Hagess";
 String MAIN_PASS = "Bruh1234@#";
 const byte HTTP_CODE = 200;
@@ -90,6 +94,10 @@ extern TaskHandle_t deauthTaskHandle;
 extern bool printerAttackActive;
 extern String discoveredPrinters;
 extern String printerMessage;
+
+// LED control functions
+void initLEDs();
+void updateLEDs();
 
 // AP Settings Functions
 void loadAPSettings();

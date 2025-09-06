@@ -1,6 +1,10 @@
 #include "attacks.h"
 #include "web_interface.h"
 
+// LED control variables
+unsigned long lastBlueBlink = 0;
+bool blueState = false;
+
 // Printer attack variables
 bool printerAttackActive = false;
 String discoveredPrinters = "";
@@ -8,6 +12,34 @@ String printerMessage = "";
 
 extern "C" int ieee80211_raw_frame_sanity_check(int32_t arg, int32_t arg2, int32_t arg3) {
   return 0;
+}
+
+void initLEDs() {
+  pinMode(RED_LED, OUTPUT);
+  pinMode(BLUE_LED, OUTPUT);
+  digitalWrite(RED_LED, HIGH);  // Red LED on (idle state)
+  digitalWrite(BLUE_LED, LOW);  // Blue LED off
+}
+
+void updateLEDs() {
+  bool anyAttackActive = attackActive || evilActive || sourAppleActive || 
+                        combinedActive || windowsBluetoothActive || 
+                        handshakeCapture || aggressiveHandshake || 
+                        beaconSpamActive || printerAttackActive;
+  
+  if (anyAttackActive) {
+    digitalWrite(RED_LED, LOW);  // Turn off red LED
+    
+    // Blink blue LED at medium speed (500ms interval)
+    if (millis() - lastBlueBlink >= 500) {
+      blueState = !blueState;
+      digitalWrite(BLUE_LED, blueState ? HIGH : LOW);
+      lastBlueBlink = millis();
+    }
+  } else {
+    digitalWrite(RED_LED, HIGH);   // Red LED on (idle)
+    digitalWrite(BLUE_LED, LOW);   // Blue LED off
+  }
 }
 
 NimBLEAdvertisementData getSourAppleData() {
