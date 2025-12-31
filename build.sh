@@ -17,7 +17,7 @@ arduino-cli core update-index
 
 # Install ESP32 core if not present
 echo "🔧 Installing ESP32 core..."
-arduino-cli core install esp32:esp32
+arduino-cli core install esp32:esp32@2.0.5
 
 # Install required libraries
 echo "📚 Installing required libraries..."
@@ -28,8 +28,9 @@ echo "🔨 Compiling Goose Hack..."
 arduino-cli compile --fqbn esp32:esp32:esp32 \
     --build-property "build.partitions=default" \
     --build-property "upload.maximum_size=1310720" \
+    --build-property "compiler.c.elf.extra_flags=-Wl,-zmuldefs" \
     --output-dir build/ \
-    captive.ino
+    captive
 
 if [ $? -eq 0 ]; then
     echo "✅ Compilation successful!"
